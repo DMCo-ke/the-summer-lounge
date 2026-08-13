@@ -1,4 +1,6 @@
 import { getPool, json, body, clean, validDate, to24, addMinutes, confirmation } from './db.mjs';
+import { createReservationToken } from './reservation-token.mjs';
+import { sendEmail, reservationEmail } from './notifications.mjs';
 function err(msg,status=400){return json({ok:false,error:msg},status)}
 export default async function(req){
   if(req.method!=='POST') return err('Method not allowed',405);
@@ -21,6 +23,16 @@ export default async function(req){
     }
     if(!assigned){const code=confirmation(); const ins=await client.query(`INSERT INTO reservations(confirmation_code,name,phone,email,guests,reservation_date,start_time,end_time,status,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'waitlist',$9) RETURNING id,confirmation_code,status`,[code,name,phone,email||null,guests,date,time,end,notes||null]); assigned=ins.rows[0];}
     await client.query('COMMIT');
-    return json({ok:true,reservation:assigned,message:assigned.status==='waitlist'?'No table is currently available at that time. You have been added to the waitlist.':'Your table is reserved.'},201);
+    let manage_url='';
+    try {
+      const token=createReservationToken({id:assigned.id,code:assigned.confirmation_code});
+      const base=(process.env.PUBLIC_SITE_URL||'').replace(/\/$/,'');
+      manage_url=base ? `${base}/manage-reservation.html?token=${encodeURIComponent(token)}` : '';
+      if(assigned.email){
+        const mail=reservationEmail({reservation:assigned,manageUrl:manage_url,action:assigned.status});
+        await sendEmail({to:assigned.email,subject:`The Summer Lounge reservation ${assigned.confirmation_code}`,...mail});
+      }
+    } catch(e){ console.error('Reservation notification failed',e); }
+    return json({ok:true,reservation:{...assigned,manage_url},message:assigned.status==='waitlist'?'No table is currently available at that time. You have been added to the waitlist.':'Your table is reserved.'},201);
   }catch(e){await client.query('ROLLBACK'); console.error(e); return err('We could not complete the reservation. Please try again.',500)}finally{client.release()}
 }

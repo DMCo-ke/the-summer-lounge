@@ -43,3 +43,20 @@ The core system does not require a third-party email provider. Customer confirma
 
 ## Important operational note
 The database is real, but the seeded table capacities are placeholders. Do not turn on public reservations until the restaurant confirms its actual table inventory, booking duration, opening hours and preferred cancellation/no-show policy.
+
+## Phase 1 production setup
+
+### Required Netlify environment variables
+- `ADMIN_PASSWORD` — private staff dashboard password.
+- `ADMIN_SECRET` — long random secret for admin sessions.
+- `PUBLIC_SITE_URL` — production site origin, e.g. `https://thesummerlounge.co.ke` (no trailing slash).
+- `RESERVATION_SECRET` — long random secret used for customer reservation management links. If omitted, `ADMIN_SECRET` is used as fallback.
+
+### Optional email delivery
+- `RESEND_API_KEY` — API key for Resend.
+- `RESEND_FROM` — verified sender, e.g. `The Summer Lounge <reservations@thesummerlounge.co.ke>`.
+
+If Resend is configured, guests who provide an email receive confirmation/status emails containing a private link to `manage-reservation.html`, where they can cancel or reschedule. The system does not expose the reservation API without the signed capability link.
+
+### WhatsApp
+The public booking flow opens WhatsApp for the guest after a successful confirmed booking. The admin dashboard also provides a WhatsApp action for each reservation. Fully automatic outbound WhatsApp messages require an approved WhatsApp Business Platform sender/template and credentials; this build intentionally uses click-to-WhatsApp so no sensitive API credentials are hard-coded.
