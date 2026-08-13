@@ -1,0 +1,9 @@
+{
+  "name": "the-summer-lounge-reservations",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {"dev":"netlify dev","build":"echo 'Static site + Netlify Functions'"},
+  "dependencies": {"@netlify/database":"latest","@netlify/functions":"latest","pg":"^8.16.3"},
+  "devDependencies": {"netlify-cli":"latest"}
+}

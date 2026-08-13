@@ -1,0 +1,2 @@
+import { json, body } from './db.mjs'; import { sign } from './auth.mjs';
+export default async function(req){if(req.method!=='POST')return json({error:'Method not allowed'},405);const {password}=await body(req);if(!process.env.ADMIN_PASSWORD||!process.env.ADMIN_SECRET)return json({error:'Admin credentials are not configured in Netlify environment variables.'},503);if(String(password||'')!==process.env.ADMIN_PASSWORD)return json({error:'Incorrect password.'},401);return json({ok:true,token:sign({role:'admin'})})}
