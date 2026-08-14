@@ -1,0 +1,5 @@
+import {getPool,json,body,clean} from './db.mjs'; import {verify,bearer} from './auth.mjs';
+export default async function(req){if(!verify(bearer(req)))return json({error:'Unauthorized'},401);const p=await getPool();
+ if(req.method==='GET'){const {rows}=await p.query('SELECT key,value FROM restaurant_settings ORDER BY key');return json({settings:Object.fromEntries(rows.map(r=>[r.key,r.value]))})}
+ if(req.method==='PATCH'){const x=await body(req);for(const [key,val] of Object.entries(x)){if(!['restaurant_name','location','opening_time','closing_time','manager_notes','auto_confirm','reservation_duration_minutes','timezone'].includes(key))continue;await p.query(`INSERT INTO restaurant_settings(key,value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`,[key,clean(val,500)])}const {rows}=await p.query('SELECT key,value FROM restaurant_settings ORDER BY key');return json({ok:true,settings:Object.fromEntries(rows.map(r=>[r.key,r.value]))})}
+ return json({error:'Method not allowed'},405)}
