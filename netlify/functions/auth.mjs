@@ -1,8 +1,21 @@
 import crypto from 'node:crypto';
-export function sign(payload){const secret=process.env.ADMIN_SECRET; if(!secret) throw new Error('ADMIN_SECRET missing'); const data=Buffer.from(JSON.stringify({...payload,exp:Date.now()+1000*60*60*12})).toString('base64url'); const sig=crypto.createHmac('sha256',secret).update(data).digest('base64url'); return data+'.'+sig;}
-export function verify(token){try{const [data,sig]=String(token||'').split('.'); const secret=process.env.ADMIN_SECRET; if(!data||!sig||!secret)return null; const expected=crypto.createHmac('sha256',secret).update(data).digest('base64url'); if(sig.length!==expected.length || !crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return null; const p=JSON.parse(Buffer.from(data,'base64url').toString()); return p.exp>Date.now()?p:null}catch{return null}}
+
+export function sign(payload){
+  const secret=process.env.ADMIN_SECRET;
+  if(!secret) throw new Error('ADMIN_SECRET missing');
+  const data=Buffer.from(JSON.stringify({...payload,exp:Date.now()+1000*60*60*12})).toString('base64url');
+  const sig=crypto.createHmac('sha256',secret).update(data).digest('base64url');
+  return data+'.'+sig;
+}
+export function verify(token){
+  try{
+    const [data,sig]=String(token||'').split('.'); const secret=process.env.ADMIN_SECRET;
+    if(!data||!sig||!secret)return null;
+    const expected=crypto.createHmac('sha256',secret).update(data).digest('base64url');
+    if(!crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return null;
+    const p=JSON.parse(Buffer.from(data,'base64url').toString()); return p.exp>Date.now()?p:null;
+  }catch{return null}
+}
 export function bearer(req){return req.headers.get('authorization')?.replace(/^Bearer\s+/i,'')||''}
-export function userFromRequest(req){const p=verify(bearer(req)); if(!p)return null; return {...p,role:p.role==='admin'?'owner':p.role||'owner'};}
-export function requireRole(req,roles=[]){const user=userFromRequest(req); if(!user)return null; return roles.length && !roles.includes(user.role)?false:user;}
-export async function hashPassword(password){const salt=crypto.randomBytes(16).toString('hex'); const derived=await new Promise((resolve,reject)=>crypto.scrypt(String(password),salt,64,{N:16384,r:8,p:1},(e,k)=>e?reject(e):resolve(k))); return `scrypt$${salt}$${derived.toString('hex')}`;}
-export async function verifyPassword(password,stored){try{const [alg,salt,hex]=String(stored||'').split('$'); if(alg!=='scrypt'||!salt||!hex)return false; const derived=await new Promise((resolve,reject)=>crypto.scrypt(String(password),salt,64,{N:16384,r:8,p:1},(e,k)=>e?reject(e):resolve(k))); const a=Buffer.from(hex,'hex'),b=Buffer.from(derived); return a.length===b.length&&crypto.timingSafeEqual(a,b);}catch{return false}}
+export function authUser(req){return verify(bearer(req))}
+export function hasRole(user,roles){return !!user && roles.includes(user.role)}
