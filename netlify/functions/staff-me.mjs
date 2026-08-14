@@ -1,0 +1,2 @@
+import {json,getPool} from './db.mjs'; import {userFromRequest} from './auth.mjs';
+export default async function(req){const u=userFromRequest(req);if(!u)return json({error:'Unauthorized'},401);if(u.sub==='owner')return json({user:{id:'owner',name:u.name||'Owner',email:u.email||'',role:'owner',active:true}});const p=await getPool();const r=await p.query('SELECT id,name,email,username,role,active,last_login,created_at FROM staff_users WHERE id=$1',[u.sub]);if(!r.rows[0]||!r.rows[0].active)return json({error:'Account disabled.'},401);return json({user:r.rows[0]});}

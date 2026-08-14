@@ -60,3 +60,24 @@
   from = "/admin/"
   to = "/admin/index.html"
   status = 200
+
+[[redirects]]
+  from = "/api/staff/login"
+  to = "/.netlify/functions/staff-login"
+  status = 200
+[[redirects]]
+  from = "/api/staff/users"
+  to = "/.netlify/functions/staff-users"
+  status = 200
+[[redirects]]
+  from = "/api/staff/me"
+  to = "/.netlify/functions/staff-me"
+  status = 200
+[[redirects]]
+  from = "/manager"
+  to = "/manager/index.html"
+  status = 200
+[[redirects]]
+  from = "/manager/"
+  to = "/manager/index.html"
+  status = 200
