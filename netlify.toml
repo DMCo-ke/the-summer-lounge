@@ -39,18 +39,3 @@
   from = "/api/health"
   to = "/.netlify/functions/health"
   status = 200
-
-[[redirects]]
-  from = "/api/admin/events"
-  to = "/.netlify/functions/admin-events"
-  status = 200
-
-[[redirects]]
-  from = "/api/admin/settings"
-  to = "/.netlify/functions/admin-settings"
-  status = 200
-
-[[redirects]]
-  from = "/admin"
-  to = "/admin/index.html"
-  status = 200
